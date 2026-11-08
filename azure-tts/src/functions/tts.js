@@ -21,6 +21,13 @@ app.http('tts', {
     const region = process.env.SPEECH_REGION;
     const key = process.env.SPEECH_KEY;
     if (!region || !key) return { status: 503, jsonBody: { error: 'Speech service is not configured' } };
+    // Header values must be ByteStrings (ASCII). A Japanese character in the configured
+    // subscription key causes fetch() to throw before any request reaches Azure Speech.
+    // Validate without echoing the secret to logs or responses.
+    if (typeof key !== 'string' || !/^[\x20-\x7e]+$/.test(key) || key !== key.trim()) {
+      context.error('Invalid SPEECH_KEY setting: expected printable ASCII without leading/trailing whitespace');
+      return { status: 503, jsonBody: { error: 'Speech credential configuration is invalid' } };
+    }
     let data;
     try { data = await request.json(); } catch { return { status: 400, jsonBody: { error: 'Invalid JSON' } }; }
     const text = typeof data?.text === 'string' ? data.text.trim() : '';
