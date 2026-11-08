@@ -351,7 +351,7 @@ var $ = function (id) { return document.getElementById(id);};
 var inputText = $("inputText"), standardText = $("standardText");
 var translations = {}; /* code -> text */
 var historyItems = [];
-var selectedLangs = { vi: true, my: true, id: true, tl: true, en: true};
+var selectedLangs = { vi: false, my: true, id: false, tl: false, en: false};
 
 /* ---------- 言語チップ ---------- */
 var langGrid = $("langGrid");
@@ -360,10 +360,16 @@ var b = document.createElement("button");
 b.type = "button";
 b.className = "lang-chip";
 b.textContent = lang.name;
-b.setAttribute("aria-pressed", "true");
-b.addEventListener("click", function () {
-selectedLangs[lang.code] =!selectedLangs[lang.code];
 b.setAttribute("aria-pressed", selectedLangs[lang.code]? "true": "false");
+b.addEventListener("click", function () {
+LANGS.forEach(function (item) { selectedLangs[item.code] = item.code === lang.code; });
+Array.prototype.forEach.call(langGrid.querySelectorAll(".lang-chip"), function (chip, index) {
+chip.setAttribute("aria-pressed", selectedLangs[LANGS[index].code]? "true": "false");
+});
+translations = {};
+renderResults();
+$("translateStatus").textContent = "";
+$("downloadBtn").disabled = true;
 });
 langGrid.appendChild(b);
 });
@@ -494,6 +500,7 @@ var status = $("translateStatus");
 status.className = "status";
 status.textContent = "翻訳しています…";
 $("translateBtn").disabled = true;
+translations = {};
 targets.forEach(function (l) { translations[l.code] = null;});
 renderResults();
 var jobs = targets.map(function (lang) {
@@ -522,7 +529,7 @@ function renderResults() {
 var box = $("results");
 box.innerHTML = "";
 LANGS.forEach(function (lang) {
-if (!(lang.code in translations)) return;
+if (!selectedLangs[lang.code] || !(lang.code in translations)) return;
 var card = document.createElement("div");
 card.className = "result-card";
 var head = document.createElement("div");
@@ -587,7 +594,7 @@ lines.push("");
 lines.push("");
 lines.push(standardText.value.trim());
 LANGS.forEach(function (lang) {
-var v = translations[lang.code];
+var v = selectedLangs[lang.code]? translations[lang.code]: null;
 if (v && v!== "__ERROR__") {
 lines.push("");
 lines.push("");
