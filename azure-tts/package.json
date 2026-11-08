@@ -1,0 +1,12 @@
+{
+  "name": "acan-care-translator-azure-tts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0"
+  }
+}
