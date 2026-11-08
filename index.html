@@ -576,11 +576,45 @@ if (!standardText.value.trim()) { showToast("変換後の文章がありませ�
 copyText(standardText.value);
 });
 function speak(text, lang) {
-if (!("speechSynthesis" in window)) { showToast("この端末では読み上げに対応していません"); return;}
-window.speechSynthesis.cancel();
+if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+showToast("このブラウザは音声読み上げに対応していません"); return;
+}
+var synth = window.speechSynthesis;
+var desired = lang.toLowerCase();
+function readWithVoice() {
+var voices = synth.getVoices();
+var voice = voices.find(function (v) { return v.lang.toLowerCase() === desired; }) ||
+voices.find(function (v) { return v.lang.toLowerCase().split("-")[0] === desired.split("-")[0]; });
+if (!voice) {
+showToast(voices.length === 0 ? "音声一覧を取得できません。端末の音声設定を確認してください" :
+(lang === "my-MM" ? "ミャンマー語の読み上げ音声が端末にありません。音声の追加設定が必要です" :
+"選択した言語の読み上げ音声が端末にありません"));
+return;
+}
+synth.cancel();
 var u = new SpeechSynthesisUtterance(text);
-u.lang = lang;
-window.speechSynthesis.speak(u);
+u.lang = voice.lang;
+u.voice = voice;
+u.rate = 0.9;
+u.onerror = function (event) {
+showToast("読み上げに失敗しました（" + (event.error || "不明なエラー") + "）。端末の音声設定を確認してください");
+};
+synth.speak(u);
+}
+if (synth.getVoices().length === 0) {
+var received = false;
+var onVoicesChanged = function () {
+if (received) return;
+received = true;
+synth.removeEventListener("voiceschanged", onVoicesChanged);
+readWithVoice();
+};
+synth.addEventListener("voiceschanged", onVoicesChanged, { once: true });
+synth.getVoices();
+showToast("音声を確認しています。反応がない場合は読み上げをもう一度押してください");
+} else {
+readWithVoice();
+}
 }
 $("speakStandardBtn").addEventListener("click", function () {
 if (!standardText.value.trim()) { showToast("変換後の文章がありません"); return;}
