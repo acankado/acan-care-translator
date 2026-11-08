@@ -13,11 +13,11 @@ function escapeXML(value) {
 }
 app.http('tts', {
   methods: ['POST'],
-  authLevel: 'anonymous',
+  authLevel: 'function',
   route: 'tts',
   handler: async (request, context) => {
-    // IMPORTANT: anonymous access is only suitable behind a server-side authenticated, rate-limited gateway.
-    // CORS is NOT authentication. Do not deploy this route openly to the internet.
+    // Function-level authorization blocks unauthenticated calls. Never expose the function key in GitHub Pages.
+    // End-user access requires a separate authenticated, rate-limited server-side gateway.
     const region = process.env.SPEECH_REGION;
     const key = process.env.SPEECH_KEY;
     if (!region || !key) return { status: 503, jsonBody: { error: 'Speech service is not configured' } };
