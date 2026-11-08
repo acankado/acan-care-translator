@@ -7,7 +7,8 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@azure/functions": "^4.0.0"
+    "@azure/functions": "^4.0.0",
+    "@azure/data-tables": "^13.3.0"
   },
   "main": "src/functions/*.js",
   "scripts": {
