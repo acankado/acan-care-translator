@@ -217,6 +217,15 @@ button.btn { width: 100%;}
 <p class="empty-note" id="breakdownEmpty">変換すると、方言や和製英語をどこをどう直したかがここに表示されます。</p>
 </section>
 
+<section class="card" aria-labelledby="h-azure-tts">
+<h2 id="h-azure-tts">Azure音声読み上げ（施設試用）</h2>
+<p class="lead">試用コードをお持ちの方は入力してください。コードはこのページを開いている間だけ保持し、保存しません。登録後は翻訳結果の「読み上げ」でAzureの音声を再生できます。</p>
+<label class="field-label" for="trialCode">施設試用コード（Azureキーではありません）</label>
+<input id="trialCode" type="password" autocomplete="off" spellcheck="false" placeholder="施設から案内された試用コード" maxlength="128" style="width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit" />
+<div class="row"><button type="button" class="mini" id="clearTrialCode">試用コードを消去</button><span class="count">音声は1日20回・5,000文字まで、連続利用は8秒以上あけてください。</span></div>
+<p class="notice">実証試験用です。利用者の氏名・病歴・介護記録などの個人情報や機密情報は入力しないでください。音声生成のため、入力文はMicrosoft Azure Speechへ送られます。</p>
+</section>
+
 <section class="card" aria-labelledby="h-translate">
 <h2 id="h-translate"><span class="num">3</span>外国語に翻訳</h2>
 <div class="lang-grid" id="langGrid" role="group" aria-label="翻訳先の言語"></div>
@@ -226,7 +235,7 @@ button.btn { width: 100%;}
 </div>
 <div class="status" id="translateStatus" aria-live="polite"></div>
 <div id="results"></div>
-<p class="notice">翻訳には外部の翻訳サービス（MyMemory）を利用しています。機械翻訳のため、固有名詞や専門用語が意図と異なる場合があります。大事な伝達では、内容を確認してからお使いください。</p>
+<p class="notice">翻訳には外部の翻訳サービス（MyMemory）を利用しています。機械翻訳のため、固有名詞や専門用語が意図と異なる場合があります。大事な伝達では、内容を確認してからお使いください。外国語のAzure読み上げには施設試用コードが必要です。</p>
 </section>
 
 <section class="card" aria-labelledby="h-history">
@@ -575,7 +584,58 @@ $("copyStandardBtn").addEventListener("click", function () {
 if (!standardText.value.trim()) { showToast("変換後の文章がありません"); return;}
 copyText(standardText.value);
 });
-function speak(text, lang) {
+var AZURE_TRIAL_URL = "https://acan-care-tts-api-etg7bkfsane8brck.westus3-01.azurewebsites.net/api/trial-tts";
+var audioPlayer = null;
+var audioObjectUrl = null;
+$("clearTrialCode").addEventListener("click", function () {
+$("trialCode").value = "";
+showToast("試用コードを消去しました");
+});
+async function speak(text, lang) {
+var code = $("trialCode").value.trim();
+if (!code) {
+  if (lang === "ja-JP") { speakBrowser(text, lang); return; }
+  showToast("Azureで読み上げるには施設試用コードを入力してください");
+  $("trialCode").focus();
+  return;
+}
+var language = lang === "ja-JP" ? "ja" : (LANGS.find(function (l) { return l.speech === lang; }) || {}).code;
+if (!language) { showToast("この言語は読み上げに対応していません"); return; }
+if (text.length > 400) { showToast("音声は400文字以内にしてください"); return; }
+try {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (audioPlayer) { audioPlayer.pause(); audioPlayer = null; }
+  if (audioObjectUrl) { URL.revokeObjectURL(audioObjectUrl); audioObjectUrl = null; }
+  showToast("Azure音声を生成しています…");
+  var response = await fetch(AZURE_TRIAL_URL, {
+    method: "POST",
+    mode: "cors",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json", "x-trial-code": code },
+    body: JSON.stringify({ text: text, language: language, slow: false })
+  });
+  if (!response.ok) {
+    var data = await response.json().catch(function () { return {}; });
+    var detail = response.status === 401 ? "試用コードが正しくありません" :
+                 response.status === 429 ? "利用上限または間隔制限に達しました" :
+                 response.status === 503 ? "Azure試用音声は準備中です" :
+                 (data.error || "音声生成に失敗しました");
+    showToast(detail);
+    return;
+  }
+  var blob = await response.blob();
+  if (!blob.type.includes("audio/")) throw new Error("Unexpected audio response");
+  audioObjectUrl = URL.createObjectURL(blob);
+  audioPlayer = new Audio(audioObjectUrl);
+  audioPlayer.onended = function () {
+    if (audioObjectUrl) { URL.revokeObjectURL(audioObjectUrl); audioObjectUrl = null; }
+  };
+  await audioPlayer.play();
+} catch (e) {
+  showToast("音声を再生できません。通信・ブラウザ設定を確認してください");
+}
+}
+function speakBrowser(text, lang) {
 if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
 showToast("このブラウザは音声読み上げに対応していません"); return;
 }
