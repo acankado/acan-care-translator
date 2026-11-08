@@ -35,11 +35,12 @@ app.http('tts', {
         method: 'POST',
         headers: {
           'Ocp-Apim-Subscription-Key': key,
-          'Content-Type': 'application/ssml+xml',
+          'Content-Type': 'application/ssml+xml; charset=utf-8',
           'X-Microsoft-OutputFormat': 'audio-16khz-128kbitrate-mono-mp3',
           'User-Agent': 'ACAN-Care-Translator-PoC'
         },
-        body: ssml,
+        // Encode multilingual SSML as UTF-8 bytes; fetch's ByteString handling may reject Unicode strings.
+        body: Buffer.from(ssml, 'utf8'),
         signal: controller.signal
       });
       if (!response.ok) {
