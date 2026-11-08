@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>日本語音声文字起こし</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<style>
+:root {
+--navy: #12305e;
+--blue: #1d6fd1;
+--blue-dark: #155aab;
+--orange: #f26a1b;
+--orange-dark: #d9550d;
+--bg: #f4f7fb;
+--surface: #ffffff;
+--surface-2: #eef3f9;
+--ink: #1c2735;
+--ink-soft: #4c5b6e;
+--line: #d7e0ec;
+--ok: #177245;
+--warn-bg: #fdf1e7;
+--warn-ink: #8a3c08;
+--chip-bg: #e8eff8;
+--shadow: 0 8px 24px rgba(18, 48, 94, 0.08);
+}
+@media (prefers-color-scheme: dark) {
+:root {
+--navy: #9db9dd;
+--blue: #5b9be0;
+--blue-dark: #7db1e8;
+--orange: #ff8a3d;
+--orange-dark: #ffa25e;
+--bg: #0c1420;
+--surface: #152236;
+--surface-2: #1b2c47;
+--ink: #e9eff7;
+--ink-soft: #a9bccd;
+--line: #2c405e;
+--ok: #4cc38a;
+--warn-bg: #3a2716;
+--warn-ink: #ffb27a;
+--chip-bg: #1e3353;
+--shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+}
+* { box-sizing: border-box;}
+html { -webkit-text-size-adjust: 100%;}
+body {
+margin: 0;
+background: var(--bg);
+color: var(--ink);
+font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+line-height: 1.7;
+}
+.wrap { max-width: 920px; margin: 0 auto; padding: 20px 16px 56px;}
+h1 { font-size: 1.55rem; line-height: 1.4; font-weight: 900; margin: 8px 0 6px; letter-spacing: 0.01em;}
+h1.accent { color: var(--orange);}
+.lead { color: var(--ink-soft); margin: 0 0 18px; font-size: 0.98rem;}
+h2 { font-size: 1.12rem; font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 8px;}
+h2.num {
+display: inline-flex; align-items: center; justify-content: center;
+width: 26px; height: 26px; border-radius: 50%;
+background: var(--navy); color: #fff; font-size: 0.85rem; font-weight: 700; flex: none;
+}
+@media (prefers-color-scheme: dark) { h2.num { background: var(--blue); color: #0c1420;}}
+.card {
+background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+box-shadow: var(--shadow); padding: 18px; margin-bottom: 18px;
+}
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px;}
+.step {
+background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+}
+.step b { display: block; font-size: 0.92rem; margin-bottom: 2px;}
+.step b span { color: var(--orange); margin-right: 6px; font-weight: 900;}
+.step p { margin: 0; font-size: 0.85rem; color: var(--ink-soft);}
+kbd {
+background: var(--surface-2); border: 1px solid var(--line); border-bottom-width: 2px;
+border-radius: 6px; padding: 0 6px; font-family: inherit; font-size: 0.85em; white-space: nowrap;
+}
+details.help { margin: -6px 0 18px; font-size: 0.88rem; color: var(--ink-soft);}
+details.help summary { cursor: pointer; color: var(--blue); font-weight: 500;}
+details.help ul { margin: 8px 0 0; padding-left: 20px;}
+label.field-label { display: block; font-weight: 700; font-size: 0.92rem; margin-bottom: 6px;}
+textarea {
+width: 100%; border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 14px;
+font: inherit; font-size: 1rem; line-height: 1.7; color: var(--ink); background: var(--surface);
+resize: vertical; min-height: 110px;
+}
+textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29, 111, 209, 0.18);}
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px;}
+.chip {
+border: 1px solid var(--line); background: var(--chip-bg); color: var(--ink);
+border-radius: 999px; padding: 5px 12px; font-size: 0.83rem; cursor: pointer; font-family: inherit;
+}
+.chip:hover { border-color: var(--blue);}
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px;}
+.spacer { flex: 1;}
+.count { font-size: 0.8rem; color: var(--ink-soft);}
+button.btn {
+font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+border-radius: 10px; padding: 10px 20px; border: 1.5px solid transparent;
+}
+button.btn-primary { background: var(--orange); color: #fff;}
+button.btn-primary:hover { background: var(--orange-dark);}
+button.btn-blue { background: var(--blue); color: #fff;}
+button.btn-blue:hover { background: var(--blue-dark);}
+button.btn-ghost { background: transparent; color: var(--ink-soft); border-color: var(--line); font-weight: 500;}
+button.btn-ghost:hover { color: var(--ink); border-color: var(--ink-soft);}
+button.btn:disabled { opacity: 0.45; cursor: not-allowed;}
+button.mini {
+font-family: inherit; font-size: 0.8rem; cursor: pointer; border-radius: 8px;
+border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
+padding: 4px 10px; font-weight: 500;
+}
+button.mini:hover { border-color: var(--blue);}
+.breakdown { margin: 12px 0 0; padding: 0; list-style: none; font-size: 0.9rem;}
+.breakdown li { padding: 6px 0; border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline;}
+.breakdown.from { font-weight: 700;}
+.breakdown.arrow { color: var(--orange); font-weight: 900;}
+.breakdown.to { font-weight: 700; color: var(--blue-dark);}
+.breakdown.tag { font-size: 0.75rem; background: var(--chip-bg); border-radius: 6px; padding: 1px 7px; color: var(--ink-soft);}
+.empty-note { color: var(--ink-soft); font-size: 0.9rem; margin: 10px 0 0;}
+.lang-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;}
+.lang-chip {
+font-family: inherit; cursor: pointer; border-radius: 999px; padding: 7px 14px; font-size: 0.9rem;
+border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-soft); font-weight: 500;
+}
+.lang-chip[aria-pressed="true"] { border-color: var(--blue); background: var(--chip-bg); color: var(--ink); font-weight: 700;}
+.result-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-top: 12px; background: var(--surface);}
+.result-card.lang-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;}
+.result-card.lang-name { font-weight: 700;}
+.result-card.lang-native { color: var(--ink-soft); font-size: 0.85rem;}
+.result-card.lang-actions { margin-left: auto; display: flex; gap: 6px;}
+.result-text { white-space: pre-wrap; word-break: break-word; font-size: 1.02rem; margin: 0;}
+.result-text.pending { color: var(--ink-soft);}
+.notice { background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: 10px 14px; font-size: 0.87rem; margin-top: 14px;}
+.status { font-size: 0.88rem; color: var(--ink-soft); min-height: 1.4em; margin-top: 10px;}
+.status.error { color: #c0392b;}
+@media (prefers-color-scheme: dark) {.status.error { color: #ff8a7a;}}
+.history-list { list-style: none; margin: 0; padding: 0;}
+.history-list li { border-top: 1px solid var(--line); padding: 10px 0; display: flex; gap: 10px; align-items: flex-start;}
+.history-list li:first-child { border-top: none;}
+.history-main { flex: 1; min-width: 0;}
+.history-text { font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.history-time { font-size: 0.78rem; color: var(--ink-soft);}
+.history-actions { display: flex; gap: 6px; flex: none;}
+.toast {
+position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+background: var(--navy); color: #fff; padding: 10px 20px; border-radius: 999px; font-size: 0.9rem;
+opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s; z-index: 50;
+}
+@media (prefers-color-scheme: dark) {.toast { background: var(--blue); color: #0c1420;}}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0);}
+footer { color: var(--ink-soft); font-size: 0.82rem; text-align: center; margin-top: 8px;}
+@media (max-width: 640px) {
+.steps { grid-template-columns: 1fr;}
+h1 { font-size: 1.3rem;}
+.card { padding: 14px;}
+button.btn { width: 100%;}
+.row.btn-ghost { width: auto;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>方言を標準語に直して、<span class="accent">5言語</span>に翻訳</h1>
+<p class="lead">日本語の文章を入力すると、方言を標準語に変換し、介護現場で実習生とのやり取りに使うベトナム語・ミャンマー語・インドネシア語・フィリピン語（タガログ語）・英語へ翻訳します。声で入力したいときは、端末の音声入力がそのまま使えます。</p>
+
+<div class="steps" aria-label="使い方">
+<div class="step"><b><span>1</span>入力欄をクリック</b><p>下の入力欄にカーソルを置きます。キーボードで直接入力しても構いません。</p></div>
+<div class="step"><b><span>2</span>音声入力で話す</b><p>Macは <kbd>Fn</kbd> キーを2回、Windowsは <kbd>Win</kbd>＋<kbd>H</kbd>、スマホはキーボードのマイクボタンで話せます。</p></div>
+<div class="step"><b><span>3</span>変換・翻訳する</b><p>「標準語に変換」を押してから、必要な言語を選んで翻訳します。</p></div>
+</div>
+
+<details class="help">
+<summary>音声入力を初めて使う方へ（有効化の手順）</summary>
+<ul>
+<li><b>Mac</b>：Appleメニュー →「システム設定」→「キーボード」→「音声入力」をオンにすると、<kbd>Fn</kbd> キー2回で話した内容が入力欄に入ります。</li>
+<li><b>Windows</b>：<kbd>Win</kbd>＋<kbd>H</kbd> で音声入力バーが開きます（初回はオンライン音声認識の許可が必要な場合があります）。</li>
+<li><b>iPhone / Android</b>：入力欄をタップしてキーボードを開き、マイクのボタンを押して話します。</li>
+</ul>
+</details>
+
+<section class="card" aria-labelledby="h-input">
+<h2 id="h-input"><span class="num">1</span>日本語を入力</h2>
+<label class="field-label" for="inputText">元の文章（方言のままで大丈夫です）</label>
+<textarea id="inputText" rows="4" placeholder="例：明日の朝、入浴の介助があるけん、気をつけてな。"></textarea>
+<div class="chips" aria-label="例文">
+<button type="button" class="chip" data-example="明日の朝、入浴の介助があるけん、気をつけてな。">例文：広島弁</button>
+<button type="button" class="chip" data-example="今日はめっちゃ暑いなあ。水分をようけ摂って、しんどくなったらすぐ言うてな。">例文：関西弁</button>
+<button type="button" class="chip" data-example="明日の朝、入浴の介助があります。無理のないように、ゆっくり声をかけてください。">例文：介護の連絡</button>
+<button type="button" class="chip" data-example="ベッドから起き上がるときは、ゆっくりでええよ。パソコンの使い方で分からんことがあったら聞いてな。">例文：方言＋和製英語</button>
+</div>
+<div class="row">
+<button type="button" class="btn btn-primary" id="convertBtn">標準語に変換</button>
+<button type="button" class="btn btn-ghost" id="clearBtn">クリア</button>
+<span class="spacer"></span>
+<span class="count" id="charCount">0文字</span>
+</div>
+</section>
+
+<section class="card" aria-labelledby="h-standard">
+<h2 id="h-standard"><span class="num">2</span>標準語に変換</h2>
+<label class="field-label" for="standardText">変換後の文章（そのまま直せます）</label>
+<textarea id="standardText" rows="4" placeholder="「標準語に変換」を押すと、ここに標準語の文章が表示されます。"></textarea>
+<div class="row">
+<button type="button" class="mini" id="copyStandardBtn">標準語をコピー</button>
+<button type="button" class="mini" id="speakStandardBtn">読み上げ</button>
+</div>
+<ul class="breakdown" id="breakdownList"></ul>
+<p class="empty-note" id="breakdownEmpty">変換すると、方言や和製英語をどこをどう直したかがここに表示されます。</p>
+</section>
+
+<section class="card" aria-labelledby="h-translate">
+<h2 id="h-translate"><span class="num">3</span>外国語に翻訳</h2>
+<div class="lang-grid" id="langGrid" role="group" aria-label="翻訳先の言語"></div>
+<div class="row">
+<button type="button" class="btn btn-blue" id="translateBtn">選んだ言語に翻訳</button>
+<button type="button" class="btn btn-ghost" id="downloadBtn" disabled>結果をテキストで保存</button>
+</div>
+<div class="status" id="translateStatus" aria-live="polite"></div>
+<div id="results"></div>
+<p class="notice">翻訳には外部の翻訳サービス（MyMemory）を利用しています。機械翻訳のため、固有名詞や専門用語が意図と異なる場合があります。大事な伝達では、内容を確認してからお使いください。</p>
+</section>
+
+<section class="card" aria-labelledby="h-history">
+<h2 id="h-history">履歴</h2>
+<p class="empty-note" style="margin-top:0">変換した文章がここに残ります（このページを開いている間だけ表示されます）。</p>
+<ul class="history-list" id="historyList"></ul>
+<p class="empty-note" id="historyEmpty">まだ履歴はありません。</p>
+</section>
+
+<footer>日本語音声文字起こし ― 方言変換・5言語翻訳ツール</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+
+/* ---------- 方言 → 標準語 ルール（長い表現から順に適用） ---------- */
+var DIALECT_RULES = [
+{ re: /なんでやねん/g, to: "どうしてですか", tag: "関西弁"},
+{ re: /そうやねん/g, to: "そうなんです", tag: "関西弁"},
+{ re: /せえへん/g, to: "しない", tag: "関西弁"},
+{ re: /へんかった/g, to: "なかった", tag: "関西弁"},
+{ re: /へん(?=。|、|けど|が|し|な|や|よ|ね|！|？|\s|$)/g, to: "ない", tag: "関西弁"},
+{ re: /ええやん/g, to: "いいじゃないですか", tag: "関西弁"},
+{ re: /ええなあ/g, to: "いいですね", tag: "関西弁"},
+{ re: /ええね/g, to: "いいですね", tag: "関西弁"},
+{ re: /ええよ/g, to: "いいですよ", tag: "関西弁"},
+{ re: /ええです/g, to: "いいです", tag: "関西弁"},
+{ re: /ちゃうちゃう/g, to: "違います", tag: "関西弁"},
+{ re: /ちゃうん/g, to: "違うの", tag: "関西弁"},
+{ re: /ちゃう/g, to: "違う", tag: "関西弁"},
+{ re: /せやから/g, to: "だから", tag: "関西弁"},
+{ re: /せやな/g, to: "そうですね", tag: "関西弁"},
+{ re: /せやで/g, to: "そうですよ", tag: "関西弁"},
+{ re: /せや/g, to: "そうです", tag: "関西弁"},
+{ re: /やねん/g, to: "なんです", tag: "関西弁"},
+{ re: /やんか/g, to: "じゃないですか", tag: "関西弁"},
+{ re: /ほんまに/g, to: "本当に", tag: "関西弁"},
+{ re: /ほんま/g, to: "本当", tag: "関西弁"},
+{ re: /あかんかった/g, to: "だめだった", tag: "関西弁"},
+{ re: /あかん/g, to: "だめです", tag: "関西弁"},
+{ re: /めっちゃ/g, to: "とても", tag: "関西弁"},
+{ re: /ようけ/g, to: "たくさん", tag: "関西弁"},
+{ re: /おおきに/g, to: "ありがとうございます", tag: "関西弁"},
+{ re: /なんぼ/g, to: "いくら", tag: "関西弁"},
+{ re: /知らん/g, to: "知らない", tag: "関西弁"},
+{ re: /分からん/g, to: "分からない", tag: "関西弁"},
+{ re: /わからん/g, to: "わからない", tag: "関西弁"},
+{ re: /あらへん/g, to: "ない", tag: "関西弁"},
+{ re: /おらん/g, to: "いない", tag: "関西弁"},
+{ re: /ええ/g, to: "良い", tag: "関西弁"},
+
+{ re: /じゃけん/g, to: "だから", tag: "広島弁"},
+{ re: /じゃけえ/g, to: "だから", tag: "広島弁"},
+{ re: /じゃろ/g, to: "でしょう", tag: "広島弁"},
+{ re: /じゃな/g, to: "ですね", tag: "広島弁"},
+{ re: /じゃ(?=。|！|？|$)/g, to: "です", tag: "広島弁"},
+{ re: /ぶち/g, to: "とても", tag: "広島弁"},
+{ re: /たいぎい/g, to: "面倒くさい", tag: "広島弁"},
+{ re: /んさい/g, to: "なさい", tag: "広島弁"},
+
+{ re: /けん(?=、|。|ね|よ|けど|！|？|\s|$)/g, to: "から", tag: "広島弁・九州弁"},
+{ re: /ばってん/g, to: "けれども", tag: "九州弁"},
+{ re: /がばい/g, to: "とても", tag: "九州弁（佐賀）"},
+{ re: /ちかっぱ/g, to: "とても", tag: "九州弁（福岡）"},
+{ re: /よか/g, to: "良い", tag: "九州弁"},
+
+{ re: /なまら/g, to: "とても", tag: "北海道弁"},
+{ re: /めんこい/g, to: "かわいい", tag: "東北弁"},
+{ re: /だっぺ/g, to: "でしょう", tag: "東北弁・茨城弁"},
+{ re: /だべ/g, to: "でしょう", tag: "東北弁"},
+
+{ re: /しとって/g, to: "していて", tag: "西日本の表現"},
+{ re: /しとった/g, to: "していた", tag: "西日本の表現"},
+{ re: /しとる/g, to: "している", tag: "西日本の表現"},
+{ re: /とる(?=。|、|よ|ね|が|けど|し|！|？|\s|$)/g, to: "ている", tag: "西日本の表現"},
+{ re: /おる(?=。|、|よ|ね|が|けど|！|？|\s|$)/g, to: "いる", tag: "西日本の表現"}
+];
+
+/* ---------- 和製英語（英語では別の言い方になります） ---------- */
+var WASEI = [
+["ノートパソコン", "laptop computer"],
+["シャープペンシル", "mechanical pencil"],
+["ガソリンスタンド", "gas station"],
+["ビニール袋", "plastic bag"],
+["ペットボトル", "plastic bottle"],
+["ベッドタウン", "bedroom suburb"],
+["サラリーマン", "office worker"],
+["フリーター", "part-time worker"],
+["アルバイト", "part-time job"],
+["ワイシャツ", "dress shirt"],
+["コンセント", "power outlet"],
+["ホッチキス", "stapler"],
+["シャーペン", "mechanical pencil"],
+["セロテープ", "adhesive tape"],
+["バンドエイド", "adhesive bandage"],
+["リフォーム", "renovation"],
+["スキンシップ", "physical affection"],
+["マンション", "apartment (condominium)"],
+["クレーム", "complaint"],
+["デパート", "department store"],
+["ファミレス", "family restaurant"],
+["コンビニ", "convenience store"],
+["パソコン", "personal computer"],
+["スマホ", "smartphone"],
+["スーパー", "supermarket"],
+["アパート", "apartment"],
+["マイホーム", "one's own home"],
+["マイカー", "one's own car"],
+["OL", "female office worker"]
+];
+
+var LANGS = [
+{ code: "vi", name: "ベトナム語", native: "Tiếng Việt", speech: "vi-VN"},
+{ code: "my", name: "ミャンマー語", native: "မြန်မာဘာသာ", speech: "my-MM"},
+{ code: "id", name: "インドネシア語", native: "Bahasa Indonesia", speech: "id-ID"},
+{ code: "tl", name: "フィリピン語（タガログ語）", native: "Filipino", speech: "fil-PH"},
+{ code: "en", name: "英語", native: "English", speech: "en-US"}
+];
+
+var $ = function (id) { return document.getElementById(id);};
+var inputText = $("inputText"), standardText = $("standardText");
+var translations = {}; /* code -> text */
+var historyItems = [];
+var selectedLangs = { vi: true, my: true, id: true, tl: true, en: true};
+
+/* ---------- 言語チップ ---------- */
+var langGrid = $("langGrid");
+LANGS.forEach(function (lang) {
+var b = document.createElement("button");
+b.type = "button";
+b.className = "lang-chip";
+b.textContent = lang.name;
+b.setAttribute("aria-pressed", "true");
+b.addEventListener("click", function () {
+selectedLangs[lang.code] =!selectedLangs[lang.code];
+b.setAttribute("aria-pressed", selectedLangs[lang.code]? "true": "false");
+});
+langGrid.appendChild(b);
+});
+
+/* ---------- 例文 ---------- */
+document.querySelectorAll("[data-example]").forEach(function (chip) {
+chip.addEventListener("click", function () {
+inputText.value = chip.getAttribute("data-example");
+updateCount();
+inputText.focus();
+});
+});
+
+function updateCount() { $("charCount").textContent = inputText.value.length + "文字";}
+inputText.addEventListener("input", updateCount);
+
+$("clearBtn").addEventListener("click", function () {
+inputText.value = "";
+updateCount();
+inputText.focus();
+});
+
+/* ---------- 標準語変換 ---------- */
+function convertToStandard(text) {
+var changes = [];
+var out = text;
+DIALECT_RULES.forEach(function (rule) {
+out = out.replace(rule.re, function (m) {
+changes.push({ from: m, to: rule.to, tag: rule.tag});
+return rule.to;
+});
+});
+WASEI.forEach(function (pair) {
+if (out.indexOf(pair[0])!== -1) {
+changes.push({ from: pair[0], to: pair[0] + "（英語では " + pair[1] + "）", tag: "和製英語"});
+}
+});
+return { text: out, changes: changes};
+}
+
+$("convertBtn").addEventListener("click", function () {
+var src = inputText.value.trim();
+if (!src) { showToast("まず文章を入力してください"); inputText.focus(); return;}
+var res = convertToStandard(src);
+standardText.value = res.text;
+renderBreakdown(res.changes);
+translations = {};
+renderResults();
+addHistory(src, res.text);
+showToast(res.changes.length? "標準語に変換しました": "変換が必要な表現は見つかりませんでした");
+});
+
+function renderBreakdown(changes) {
+var list = $("breakdownList");
+list.innerHTML = "";
+$("breakdownEmpty").style.display = changes.length? "none": "";
+changes.forEach(function (c) {
+var li = document.createElement("li");
+var f = document.createElement("span"); f.className = "from"; f.textContent = "「" + c.from + "」";
+var a = document.createElement("span"); a.className = "arrow"; a.textContent = "→";
+var t = document.createElement("span"); t.className = "to"; t.textContent = "「" + c.to + "」";
+var tag = document.createElement("span"); tag.className = "tag"; tag.textContent = c.tag;
+li.appendChild(f); li.appendChild(a); li.appendChild(t); li.appendChild(tag);
+list.appendChild(li);
+});
+}
+
+/* ---------- 翻訳（MyMemory） ---------- */
+function splitSentences(text) {
+var res = [], cur = "";
+for (var i = 0; i < text.length; i++) {
+cur += text[i];
+if ("。！？\n".indexOf(text[i])!== -1) { res.push(cur); cur = "";}
+}
+if (cur) res.push(cur);
+return res;
+}
+function chunkText(text) {
+var chunks = [], cur = "";
+splitSentences(text).forEach(function (s) {
+if ((cur + s).length > 400) { if (cur) chunks.push(cur); cur = s;} else { cur += s;}
+});
+if (cur) chunks.push(cur);
+var out = [];
+chunks.forEach(function (c) {
+if (c.length > 450) {
+for (var i = 0; i < c.length; i += 450) out.push(c.slice(i, i + 450));
+} else out.push(c);
+});
+return out;
+}
+function prepareForEnglish(text) {
+var out = text;
+WASEI.forEach(function (pair) {
+out = out.split(pair[0]).join(pair[1]);
+});
+return out;
+}
+function translateChunk(chunk, code) {
+var url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(chunk) + "&langpair=ja|" + code;
+return fetch(url).then(function (r) { return r.json();}).then(function (data) {
+if (!data ||!data.responseData ||!data.responseData.translatedText) {
+throw new Error("no result");
+}
+var t = data.responseData.translatedText;
+if (/QUERY LENGTH LIMIT|INVALID|NO QUERY/i.test(t)) throw new Error("api limit");
+return t;
+});
+}
+function translateText(text, code) {
+var src = code === "en"? prepareForEnglish(text): text;
+var chunks = chunkText(src);
+var chain = Promise.resolve("");
+chunks.forEach(function (chunk) {
+chain = chain.then(function (acc) {
+return translateChunk(chunk, code).then(function (t) { return acc + t;});
+});
+});
+return chain;
+}
+
+$("translateBtn").addEventListener("click", function () {
+var src = standardText.value.trim() || inputText.value.trim();
+if (!src) { showToast("まず文章を入力し、標準語に変換してください"); return;}
+var targets = LANGS.filter(function (l) { return selectedLangs[l.code];});
+if (!targets.length) { showToast("翻訳する言語を選んでください"); return;}
+var status = $("translateStatus");
+status.className = "status";
+status.textContent = "翻訳しています…";
+$("translateBtn").disabled = true;
+targets.forEach(function (l) { translations[l.code] = null;});
+renderResults();
+var jobs = targets.map(function (lang) {
+return translateText(src, lang.code).then(function (t) {
+translations[lang.code] = t;
+}).catch(function () {
+translations[lang.code] = "__ERROR__";
+}).then(function () { renderResults();});
+});
+Promise.all(jobs).then(function () {
+$("translateBtn").disabled = false;
+var failed = targets.some(function (l) { return translations[l.code] === "__ERROR__";});
+status.textContent = failed? "": "翻訳が完了しました。";
+if (failed) {
+status.className = "status error";
+status.textContent = "一部の言語で翻訳できませんでした。通信状態を確認して、もう一度お試しください。";
+}
+$("downloadBtn").disabled =!Object.keys(translations).some(function (k) {
+return translations[k] && translations[k]!== "__ERROR__";
+});
+updateHistoryTranslations(src);
+});
+});
+
+function renderResults() {
+var box = $("results");
+box.innerHTML = "";
+LANGS.forEach(function (lang) {
+if (!(lang.code in translations)) return;
+var card = document.createElement("div");
+card.className = "result-card";
+var head = document.createElement("div");
+head.className = "lang-head";
+var name = document.createElement("span"); name.className = "lang-name"; name.textContent = lang.name;
+var nat = document.createElement("span"); nat.className = "lang-native"; nat.textContent = lang.native;
+var actions = document.createElement("span"); actions.className = "lang-actions";
+var val = translations[lang.code];
+if (val && val!== "__ERROR__") {
+var copyBtn = document.createElement("button");
+copyBtn.type = "button"; copyBtn.className = "mini"; copyBtn.textContent = "コピー";
+copyBtn.addEventListener("click", function () { copyText(val);});
+var speakBtn = document.createElement("button");
+speakBtn.type = "button"; speakBtn.className = "mini"; speakBtn.textContent = "読み上げ";
+speakBtn.addEventListener("click", function () { speak(val, lang.speech);});
+actions.appendChild(copyBtn); actions.appendChild(speakBtn);
+}
+head.appendChild(name); head.appendChild(nat); head.appendChild(actions);
+var p = document.createElement("p");
+if (val === null) { p.className = "result-text pending"; p.textContent = "翻訳しています…";}
+else if (val === "__ERROR__") { p.className = "result-text pending"; p.textContent = "翻訳できませんでした。";}
+else { p.className = "result-text"; p.textContent = val;}
+card.appendChild(head); card.appendChild(p);
+box.appendChild(card);
+});
+}
+
+/* ---------- コピー・読み上げ・保存 ---------- */
+function copyText(text) {
+function done() { showToast("コピーしました");}
+if (navigator.clipboard && navigator.clipboard.writeText) {
+navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text); done();});
+} else { fallbackCopy(text); done();}
+}
+function fallbackCopy(text) {
+var ta = document.createElement("textarea");
+ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+document.body.appendChild(ta); ta.select();
+try { document.execCommand("copy");} catch (e) { /* noop */}
+document.body.removeChild(ta);
+}
+$("copyStandardBtn").addEventListener("click", function () {
+if (!standardText.value.trim()) { showToast("変換後の文章がありません"); return;}
+copyText(standardText.value);
+});
+function speak(text, lang) {
+if (!("speechSynthesis" in window)) { showToast("この端末では読み上げに対応していません"); return;}
+window.speechSynthesis.cancel();
+var u = new SpeechSynthesisUtterance(text);
+u.lang = lang;
+window.speechSynthesis.speak(u);
+}
+$("speakStandardBtn").addEventListener("click", function () {
+if (!standardText.value.trim()) { showToast("変換後の文章がありません"); return;}
+speak(standardText.value, "ja-JP");
+});
+$("downloadBtn").addEventListener("click", function () {
+var lines = [];
+lines.push("");
+lines.push(inputText.value.trim());
+lines.push("");
+lines.push("");
+lines.push(standardText.value.trim());
+LANGS.forEach(function (lang) {
+var v = translations[lang.code];
+if (v && v!== "__ERROR__") {
+lines.push("");
+lines.push("");
+lines.push(v);
+}
+});
+var blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8"});
+var a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = "変換・翻訳結果.txt";
+document.body.appendChild(a); a.click(); document.body.removeChild(a);
+setTimeout(function () { URL.revokeObjectURL(a.href);}, 2000);
+});
+
+/* ---------- 履歴（このページを開いている間のみ） ---------- */
+function addHistory(original, standard) {
+var item = {
+time: new Date(),
+original: original,
+standard: standard,
+translations: {}
+};
+historyItems.unshift(item);
+if (historyItems.length > 30) historyItems.pop();
+renderHistory();
+}
+function updateHistoryTranslations(standardSrc) {
+for (var i = 0; i < historyItems.length; i++) {
+if (historyItems[i].standard === standardSrc) {
+historyItems[i].translations = JSON.parse(JSON.stringify(translations));
+break;
+}
+}
+}
+function renderHistory() {
+var list = $("historyList");
+list.innerHTML = "";
+$("historyEmpty").style.display = historyItems.length? "none": "";
+historyItems.forEach(function (item, idx) {
+var li = document.createElement("li");
+var main = document.createElement("div"); main.className = "history-main";
+var txt = document.createElement("div"); txt.className = "history-text"; txt.textContent = item.standard;
+var time = document.createElement("div"); time.className = "history-time";
+time.textContent = item.time.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit"});
+main.appendChild(txt); main.appendChild(time);
+var actions = document.createElement("div"); actions.className = "history-actions";
+var loadBtn = document.createElement("button");
+loadBtn.type = "button"; loadBtn.className = "mini"; loadBtn.textContent = "呼び出す";
+loadBtn.addEventListener("click", function () {
+inputText.value = item.original;
+standardText.value = item.standard;
+updateCount();
+renderBreakdown(convertToStandard(item.original).changes);
+translations = JSON.parse(JSON.stringify(item.translations || {}));
+Object.keys(translations).forEach(function (k) {
+if (translations[k] === null) delete translations[k];
+});
+renderResults();
+$("downloadBtn").disabled =!Object.keys(translations).length;
+window.scrollTo({ top: 0, behavior: "smooth"});
+});
+var delBtn = document.createElement("button");
+delBtn.type = "button"; delBtn.className = "mini"; delBtn.textContent = "削除";
+delBtn.addEventListener("click", function () {
+historyItems.splice(idx, 1);
+renderHistory();
+});
+actions.appendChild(loadBtn); actions.appendChild(delBtn);
+li.appendChild(main); li.appendChild(actions);
+list.appendChild(li);
+});
+}
+
+/* ---------- トースト ---------- */
+var toastTimer = null;
+function showToast(msg) {
+var t = $("toast");
+t.textContent = msg;
+t.classList.add("show");
+if (toastTimer) clearTimeout(toastTimer);
+toastTimer = setTimeout(function () { t.classList.remove("show");}, 2400);
+}
+
+updateCount();
+renderHistory();
+</script>
+</body>
+</html>
